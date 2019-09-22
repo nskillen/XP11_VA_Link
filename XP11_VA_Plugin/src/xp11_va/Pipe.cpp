@@ -21,18 +21,16 @@ constexpr Platform CURRENT_PLATFORM = Platform::Linux;
 #endif
 
 namespace xp11_va {
-	std::future<std::shared_ptr<Pipe>> Pipe::get() {
-		return std::async([]() -> std::shared_ptr<Pipe> {
-			switch (CURRENT_PLATFORM) {
-			case Platform::Windows:
-				return std::make_shared<platform::windows::WinPipe>();
-			case Platform::MacOS:
-				throw std::runtime_error("MacOS is not supported");
-			case Platform::Linux:
-				throw std::runtime_error("Linux is not supported");
-			default:
-				throw std::runtime_error("Unsupported platform");
-			}
-		});
+	std::shared_ptr<Pipe> Pipe::get() {
+		switch (CURRENT_PLATFORM) {
+		case Platform::Windows:
+			return std::make_shared<platform::windows::WinPipe>();
+		case Platform::MacOS:
+			throw std::runtime_error("MacOS is not supported");
+		case Platform::Linux:
+			throw std::runtime_error("Linux is not supported");
+		default:
+			throw std::runtime_error("Unsupported platform");
+		}
 	}
 }

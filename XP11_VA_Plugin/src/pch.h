@@ -13,9 +13,11 @@
 #include "framework.h"
 
 #include <XPLM/XPLMPlugin.h>
+#include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMUtilities.h>
 
 #include <future>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>

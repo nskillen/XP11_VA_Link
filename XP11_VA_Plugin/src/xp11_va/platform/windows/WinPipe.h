@@ -9,32 +9,16 @@ namespace xp11_va::platform::windows {
 	class WinPipe final : public Pipe {
 	public:
 		WinPipe();
-		virtual ~WinPipe() override;
+		~WinPipe() override;
 
-		std::future<bool> Connect() override;
-		std::future<std::string> ReadPipe() override;
-		std::future<bool> WritePipe(std::string) override;
+		void Connect() override;
+		bool IsConnected() override;
+		std::optional<std::string> ReadPipe() override;
+		bool WritePipe(std::string) override;
+		void Abort(std::thread::native_handle_type) override;
 		
 	private:
-		template <typename T>
-		struct OVERLAPPED_BUFFER {
-			OVERLAPPED overlap;
-			char buffer[BUFFER_SIZE];
-			DWORD count;
-			std::promise<T> promise;
-		};
-
 		HANDLE pipe;
-		
-		std::promise<bool> connectPromise;
-		std::thread connectThread;
-		OVERLAPPED connectOverlap;
-		HANDLE connectEvent;
-
-		OVERLAPPED_BUFFER<std::string> readOverlap;
-		OVERLAPPED_BUFFER<bool> writeOverlap;
-
-		friend void readCompleteCallback(DWORD, DWORD, LPOVERLAPPED);
-		friend void writeCompleteCallback(DWORD, DWORD, LPOVERLAPPED);
+		bool connected;
 	};
 }

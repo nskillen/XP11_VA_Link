@@ -3,8 +3,6 @@
 #include "Pipe.h"
 #include "Logger.h"
 
-#include <future>
-
 #include <XPLM/XPLMProcessing.h>
 
 using namespace std::chrono_literals;
@@ -23,94 +21,106 @@ namespace xp11_va {
 	const Logger& logger = Logger::get();
 	
 	Link::Link() : started(false) {
-		logger.Trace("Link constructor enter");
 		shouldStop = false;
 		flightLoopID = createFlightLoop();
 		XPLMScheduleFlightLoop(flightLoopID, -1, true);
-		logger.Trace("Link constructor leave");
 	}
 
 	Link::~Link() {
-		logger.Trace("Link destructor enter");
 		Stop();
 		if (flightLoopID) {
+			logger.Info("Nuking flight loop");
 			XPLMDestroyFlightLoop(flightLoopID);
 		}
-		if (connectionThread.joinable()) {
-			logger.Trace("joining pipeThread...");
-			connectionThread.join();
-			logger.Trace("pipeThread joined (aka it's done)");
-		}
-		logger.Trace("Link destructor leave");
 	}
 
 	void Link::Start() {
-		logger.Trace("Link::Start enter");
-
 		if (started) {
 			throw std::runtime_error("Link already started");
 		}
-		
-		connectionThread = std::thread([this]() {
-			logger.Trace("Link background thread start");
-			try {
-				while (!shouldStop) {
-					try {
-						pipeThreads.push_back(connectAndRunPipe(Pipe::get().get()));
-					} catch (std::runtime_error& err) {
-						logger.Error(err.what());
+
+		connectionThread = std::make_unique<std::thread>(std::thread([this]() {
+			while (!shouldStop) {
+				connectingPipe = Pipe::get();
+				try {
+					connectingPipe->Connect();
+					if (!connectingPipe->IsConnected()) {
+						continue;
+					}
+					
+					auto pipe_thread = std::make_unique<std::thread>([this, pipe = connectingPipe]() {
+						try {
+							while (!shouldStop) {
+								auto maybe_request = pipe->ReadPipe();
+								if (!maybe_request.has_value()) { break; }
+								
+								const auto request = maybe_request.value();
+								const auto response = processRequest(request);
+
+								if (!pipe->WritePipe(response + "\n")) { break; }
+								logger.Info("Responded with: " + response);
+							}
+						}
+						catch (...) {
+							logger.Error("Error on pipe thread: " + what());
+						}
+
+						logger.Trace("Pipe thread terminating");
+						});
+					{
+						std::lock_guard<std::mutex> lock(pipesMutex);
+						pipes.emplace_back(std::make_pair(std::move(pipe_thread), connectingPipe));
 					}
 				}
-				logger.Info("shouldStop has gone false");
-				logger.Info("Waiting for pipe threads to terminate...");
-				while (!pipeThreads.empty()) {
-					auto& pipe_thread = pipeThreads.back();
-					pipe_thread->join();
-					pipeThreads.pop_back();
+				catch (...) {
+					logger.Error("Error on connect thread: " + what());
 				}
-				logger.Info("All pipe threads have terminated");
-			} catch (const std::exception& ex) {
-				logger.Critical(ex.what());
 			}
-			logger.Trace("Link background thread terminating");
-		});
+		}));
 		started = true;
-		logger.Trace("Link::Start leave");
 	}
 
 	void Link::Stop() {
-		logger.Trace("Link::Stop enter");
-
-		if (!started) {
-			logger.Trace("Link::Stop leave");
-			return;
-		}
+		if (!started) { return; }
 		
 		try {
 			shouldStop = true;
-			for (auto& pipe : pipes) {
-				pipe.reset();
+			
+			if (!pipes.empty()) {
+				logger.Info("Killing " + std::to_string(pipes.size()) + " pipes");
+				for (auto& pipe_pair : pipes) {
+					auto& thread = pipe_pair.first;
+					auto& pipe = pipe_pair.second;
+					pipe->Abort(thread->native_handle());
+					std::stringstream ss;
+					ss << "Pipe thread " << thread->get_id() << " killed, joining";
+					logger.Info(ss.str());
+					if (thread->joinable()) {
+						thread->join();
+					}
+				}
+				logger.Info("Pipe threads killed, clearing list");
+				pipes.clear();
 			}
-		} catch (const std::exception& e) {
-			logger.Critical(e.what());
+
+			if (connectionThread) {
+				logger.Info("Killing connectingPipe");
+				connectingPipe->Abort(connectionThread->native_handle());
+				logger.Info("Connecting thread killed, joining");
+				if (connectionThread->joinable()) {
+					connectionThread->join();
+				}
+				logger.Info("Clearing connection thread");
+				connectionThread.reset();
+			}
+			
+			logger.Info("All pipes killed");
+		} catch (...) {
+			logger.Error("Error while stopping pipes: " + what());
 		}
-		logger.Trace("Link::Stop leave");
-	}
-
-	void Link::runOnSimThread(const Callback& callback) {
-		logger.Trace("Link::runOnSimThread enter");
-
-		std::lock_guard<std::mutex> lock(callbackMutex);
-
-		if (shouldStop) { return; } // do nothing, plugin is terminating
-		
-		flightLoopCallbacks.push_back(callback);
-		
-		logger.Trace("Link::runOnSimThread leave");
 	}
 
 	XPLMFlightLoopID Link::createFlightLoop() {
-		logger.Trace("Link::createFlightLoop enter");
 		XPLMCreateFlightLoop_t loop;
 		loop.structSize = sizeof(XPLMCreateFlightLoop_t);
 		loop.phase = xplm_FlightLoop_Phase_BeforeFlightModel;
@@ -126,16 +136,10 @@ namespace xp11_va {
 			throw std::runtime_error("Couldn't create flight loop");
 		}
 
-		logger.Trace("Link::createFlightLoop leave");
 		return id;
 	}
 
 	float Link::onFlightLoop(float /*elapsedSinceLastCall*/, float /*elapsedSinceLastLoop*/, int count) {
-		runCallbacks();
-		return 0.25;
-	}
-
-	void Link::runCallbacks() {
 		std::lock_guard<std::mutex> lock(callbackMutex);
 		if (!flightLoopCallbacks.empty()) {
 			logger.Info("Running " + std::to_string(flightLoopCallbacks.size()) + " callbacks");
@@ -144,57 +148,58 @@ namespace xp11_va {
 			}
 			flightLoopCallbacks.clear();
 		}
+		return 0.25;
 	}
 
-	std::unique_ptr<std::thread> Link::connectAndRunPipe(std::shared_ptr<Pipe>&& _pipe) {
-		pipes.push_back(std::move(_pipe));
-		auto pipe = pipes.back();
-		auto pi = pipes.size() - 1;
+	void Link::runOnSimThread(const Callback& callback) {
+		std::lock_guard<std::mutex> lock(callbackMutex);
 
-		pipe->Connect().get();
+		if (shouldStop) { return; } // do nothing, plugin is terminating
 
-		return std::make_unique<std::thread>(std::thread{ [this, pi]() {
-			while (!shouldStop) {
-				auto pipe = pipes.at(pi);
-				auto data_ref_name = pipe->ReadPipe().get();
+		flightLoopCallbacks.push_back(callback);
+	}
 
-				std::promise<std::string> reply_promise;
-				auto reply_future = reply_promise.get_future();
+	std::string Link::processRequest(const std::string& request) {
+		logger.Info("Received dataRef request: " + request);
 
-				runOnSimThread([&reply_promise, &data_ref_name, this]() {
-					logger.Trace("Sim-thread callback running");
-					try {
-						auto data = refCache.getData(data_ref_name);
-						reply_promise.set_value(data.ToString());
-						logger.Info("Got value: " + data_ref_name + "=" + data.ToString());
-					}
-					catch (...) {
-						reply_promise.set_exception(std::current_exception());
-					}
-					});
+		if (request.substr(0, 3) == "get") {
+			const std::string requested_data_ref = request.substr(4);
+			std::promise<std::string> value_promise;
+			auto value_future = value_promise.get_future();
 
-				std::string reply{ };
+			runOnSimThread([this, &value_promise, &requested_data_ref]() {
 				try {
-					logger.Info("Awaiting a reply from the future...");
-					reply = reply_future.get();
+					auto data = refCache.getData(requested_data_ref);
+					value_promise.set_value(data.ToString());
 				}
-				catch (std::runtime_error& e) {
-					logger.Error(e.what());
-					reply = "invalid data ref " + data_ref_name;
+				catch (...) {
+					value_promise.set_exception(std::current_exception());
 				}
+				});
 
-				logger.Trace("Will write reply to pipe...");
-				pipe->WritePipe(reply).get();
+			try {
+				return value_future.get();
 			}
-		} });
+			catch (...) {
+				return "{invalid_dataref}";
+			}
+		}
+		else if (request.substr(0, 3) == "set") {
+			try {
+				const std::string data_ref_part = request.substr(request.find(';') + 1);
+				const std::string updated_data_ref_name = data_ref_part.substr(0, data_ref_part.find(';'));
+				const std::string updated_data_ref_value = data_ref_part.substr(data_ref_part.find(';') + 1);
+				const auto ed = EnvData::fromString(updated_data_ref_value);
+				refCache.setData(updated_data_ref_name, ed);
+				return "{ok}";
+			} catch (...) {
+				logger.Error("Error setting dataref: " + what());
+				return "{set_failed}";
+			}
+		}
+		else {
+			return "{invalid_command_" + request.substr(0, request.find(';')) + "}";
+		}
 	}
 
-	void Link::with_lock(std::mutex& mutex, const std::function<void()>&& func) {
-		std::lock_guard<std::mutex> lock(mutex);
-		logger.Trace("mutex locked");
-
-		func();
-		
-		logger.Trace("mutex unlocking");
-	}
 }

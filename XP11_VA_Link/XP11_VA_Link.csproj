@@ -41,10 +41,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UDPSocket.cs" />
+    <Compile Include="DataRef.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="XP11Link.cs" />
     <Compile Include="XP11_VA_Link.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\VoiceAttack\Apps\$(TargetName)\$(TargetFileName)"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

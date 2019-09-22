@@ -3,14 +3,16 @@
 namespace xp11_va {
 	class Pipe {
 	public:
-		static std::future<std::shared_ptr<Pipe>> get();
+		static std::shared_ptr<Pipe> get();
 
 	public:
 		Pipe() = default;
 		virtual ~Pipe() = default;
 
-		virtual std::future<bool> Connect() = 0;
-		virtual std::future<std::string> ReadPipe() = 0;
-		virtual std::future<bool> WritePipe(std::string) = 0;
+		virtual void Connect() = 0;
+		virtual bool IsConnected() = 0;
+		virtual std::optional<std::string> ReadPipe() = 0;
+		virtual bool WritePipe(std::string) = 0;
+		virtual void Abort(std::thread::native_handle_type) = 0;
 	};
 }

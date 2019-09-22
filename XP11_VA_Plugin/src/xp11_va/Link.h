@@ -25,9 +25,12 @@ namespace xp11_va {
 		bool started;
 		DataCache refCache;
 		std::atomic_bool shouldStop;
-		std::thread connectionThread;
-		std::vector<std::shared_ptr<Pipe>> pipes;
-		std::vector<std::unique_ptr<std::thread>> pipeThreads;
+		std::unique_ptr<std::thread> connectionThread;
+		std::shared_ptr<Pipe> connectingPipe;
+		std::vector<std::pair<
+			std::unique_ptr<std::thread>,
+			std::shared_ptr<Pipe>>> pipes;
+		std::mutex pipesMutex;
 		
 		XPLMFlightLoopID flightLoopID;
 		std::mutex callbackMutex;
@@ -35,10 +38,8 @@ namespace xp11_va {
 
 		XPLMFlightLoopID createFlightLoop();
 		float onFlightLoop(float, float, int);
-		void runCallbacks();
 		void runOnSimThread(const Callback&);
 
-		std::unique_ptr<std::thread> connectAndRunPipe(std::shared_ptr<Pipe>&&);
-		static void with_lock(std::mutex&, const std::function<void()>&&);
+		std::string processRequest(const std::string&);
 	};
 }
