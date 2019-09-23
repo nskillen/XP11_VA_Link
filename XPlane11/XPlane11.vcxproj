@@ -16,6 +16,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>XP11VAPlugin</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>XPlane11</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -45,14 +46,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\XP11\include;$(ProjectDir)src;$(SolutionDir)\protobuf-3.9.1\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\XP11\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\XP11\lib;$(LibraryPath)</LibraryPath>
     <TargetName>XP11_VA_Link</TargetName>
     <TargetExt>.xpl</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\XP11\include;$(ProjectDir)src;$(SolutionDir)\protobuf-3.9.1\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\XP11\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\XP11\lib;$(LibraryPath)</LibraryPath>
     <TargetName>XP11_VA_Link</TargetName>
     <TargetExt>.xpl</TargetExt>

@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XP11_VA_Link", "XP11_VA_Link\XP11_VA_Link.csproj", "{010C3737-03B1-4E6A-8A43-0225E19CD1BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceAttack", "VoiceAttack\VoiceAttack.csproj", "{010C3737-03B1-4E6A-8A43-0225E19CD1BE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XP11_VA_Plugin", "XP11_VA_Plugin\XP11_VA_Plugin.vcxproj", "{9E9242BF-694D-48F3-A472-3B7A7E60AA91}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XPlane11", "XPlane11\XPlane11.vcxproj", "{9E9242BF-694D-48F3-A472-3B7A7E60AA91}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A9CB5811-E225-452A-8F46-F6F097ABB6B4}"
 	ProjectSection(SolutionItems) = preProject
