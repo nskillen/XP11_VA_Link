@@ -77,9 +77,8 @@ namespace XP11_VA_Link
         /// <param name="vaProxy"></param>
         public static void VA_Init1(dynamic vaProxy)
         {
-
             logger = new Logger((msg, color) => vaProxy.WriteToLog(msg, color));
-            logger.MinLevel = Logger.Level.Trace;
+            logger.MinLevel = Logger.Level.Warning;
             vaProxy.WriteToLog("VA_Init1", "green");
             link = new XP11Link(logger);
         }
@@ -159,11 +158,11 @@ namespace XP11_VA_Link
 
         private static void GetDataRef(dynamic vaProxy)
         {
-            string dataRefName = vaProxy.GetText("dataRefName");
+            string datarefName = vaProxy.GetText("datarefName");
             string targetVar = vaProxy.GetText("targetVar");
-            if (targetVar == null) { targetVar = "dataRefValue"; }
+            if (targetVar == null) { targetVar = "datarefValue"; }
 
-            DataRef dr = link.GetDataref(dataRefName);
+            DataRef dr = link.GetDataref(datarefName);
             if (dr != null)
             {
                 logger.Info("Got dataref: " + dr.ToString());
@@ -191,52 +190,44 @@ namespace XP11_VA_Link
                 }
             } else
             {
-                logger.Warn("Failed to get dataref: " + dataRefName);
+                logger.Warn("Failed to get dataref: " + datarefName);
             }
         }
 
         private static void SetDataRef(dynamic vaProxy)
         {
-            string dataRefName = vaProxy.GetText("dataRefName");
-            int dataRefType = ((int?)vaProxy.GetInt("dataRefType")).GetValueOrDefault(0);
-            object dataRefValue = null;
+            string datarefName = vaProxy.GetText("datarefName");
+            int datarefType = ((int?)vaProxy.GetInt("datarefType")).GetValueOrDefault(0);
+            object datarefValue = null;
 
-            switch ((DataRef.Type)dataRefType)
+            switch ((DataRef.Type)datarefType)
             {
                 case DataRef.Type.Int:
-                    int? ival = (int?)vaProxy.GetInt("dataRefValue");
-                    if (ival.HasValue)
-                    {
-                        dataRefValue = ival.Value;
-                    }
+                    int? ival = (int?)vaProxy.GetInt("datarefValue");
+                    datarefValue = ival.HasValue ? ival.Value : throw new ArgumentException("No int value assigned to datarefValue");
                     break;
                 case DataRef.Type.Float:
-                    decimal? fval = (decimal?)vaProxy.GetDecimal("dataRefValue");
-                    if (fval.HasValue)
-                    {
-                        dataRefValue = (float)fval.Value;
-                    }
+                    decimal? fval = (decimal?)vaProxy.GetDecimal("datarefValue");
+                    datarefValue = fval.HasValue ? (float)fval.Value : throw new ArgumentException("No decimal value assigned to datarefValue");
                     break;
                 case DataRef.Type.Double:
-                    decimal? dval = (decimal?)vaProxy.GetDecimal("dataRefValue");
-                    if (dval.HasValue)
-                    {
-                        dataRefValue = (double)dval.Value;
-                    }
+                    decimal? dval = (decimal?)vaProxy.GetDecimal("datarefValue");
+                    datarefValue = dval.HasValue ? (double)dval.Value : throw new ArgumentException("No decimal value assigned to datarefValue");
                     break;
                 case DataRef.Type.FloatArray:
                     throw new ArgumentException("Array datarefs are not yet supported");
                 case DataRef.Type.IntArray:
                     throw new ArgumentException("Array datarefs are not yet supported");
                 case DataRef.Type.Data:
-                    dataRefValue = (string)vaProxy.GetText("dataRefValue");
+                    datarefValue = (string)vaProxy.GetText("datarefValue");
                     break;
                 case DataRef.Type.Unknown:
                 default:
-                    throw new ArgumentException("Unsupported data type: " + dataRefType);
+                    throw new ArgumentException("Unsupported data type: " + datarefType);
             }
 
-            DataRef dr = DataRef.FromObject(dataRefName, dataRefValue);
+            
+            DataRef dr = DataRef.FromObject(datarefName, datarefValue);
             if (dr != null)
             {
                 logger.Debug("Will set dataref: " + dr.ToString());
@@ -252,9 +243,9 @@ namespace XP11_VA_Link
             else
             {
                 logger.Error("Failed to convert input into dataref");
-                logger.Debug("dataRefName: " + dataRefName);
-                logger.Debug("dataRefType: " + dataRefType);
-                logger.Debug("dataRefValue: " + dataRefValue);
+                logger.Debug("datarefName: " + datarefName);
+                logger.Debug("datarefType: " + datarefType);
+                logger.Debug("datarefValue: " + datarefValue);
             }
         }
     }

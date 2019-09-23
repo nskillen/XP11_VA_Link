@@ -106,6 +106,7 @@
   <ItemGroup>
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="src\xp11_va\DataCache.h" />
+    <ClInclude Include="src\xp11_va\EnvData.h" />
     <ClInclude Include="src\xp11_va\Link.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\xp11_va\Logger.h" />
@@ -119,6 +120,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\xp11_va\DataCache.cpp" />
+    <ClCompile Include="src\xp11_va\EnvData.cpp" />
     <ClCompile Include="src\xp11_va\Link.cpp" />
     <ClCompile Include="src\xp11_va\Logger.cpp" />
     <ClCompile Include="src\xp11_va\Pipe.cpp" />

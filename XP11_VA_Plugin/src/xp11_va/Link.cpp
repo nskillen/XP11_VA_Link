@@ -19,6 +19,8 @@ namespace xp11_va {
 	}
 
 	const Logger& logger = Logger::get();
+
+	/* PUBLIC API */
 	
 	Link::Link() : started(false) {
 		shouldStop = false;
@@ -120,6 +122,8 @@ namespace xp11_va {
 		}
 	}
 
+	/* PRIVATE API */
+
 	XPLMFlightLoopID Link::createFlightLoop() {
 		XPLMCreateFlightLoop_t loop;
 		loop.structSize = sizeof(XPLMCreateFlightLoop_t);
@@ -160,16 +164,21 @@ namespace xp11_va {
 	}
 
 	std::string Link::processRequest(const std::string& request) {
-		logger.Info("Received dataRef request: " + request);
+		logger.Info("Received dataref request: " + request);
 
 		if (request.substr(0, 3) == "get") {
 			const std::string requested_data_ref = request.substr(4);
+			const XPLMDataRef ref = refCache.GetDataref(requested_data_ref);
+			if (!ref) {
+				return "{invalid_dataref}";
+			}
+
 			std::promise<std::string> value_promise;
 			auto value_future = value_promise.get_future();
 
-			runOnSimThread([this, &value_promise, &requested_data_ref]() {
+			runOnSimThread([this, &value_promise, &requested_data_ref, &ref]() {
 				try {
-					auto data = refCache.getData(requested_data_ref);
+					auto data = EnvData::fromDataref(requested_data_ref, ref);
 					value_promise.set_value(data.ToString());
 				}
 				catch (...) {
@@ -181,7 +190,8 @@ namespace xp11_va {
 				return value_future.get();
 			}
 			catch (...) {
-				return "{invalid_dataref}";
+				logger.Error("Error getting dataref: " + what());
+				return "{get_failed}";
 			}
 		}
 		else if (request.substr(0, 3) == "set") {
@@ -189,9 +199,8 @@ namespace xp11_va {
 				const std::string data_ref_part = request.substr(request.find(';') + 1);
 				const std::string updated_data_ref_name = data_ref_part.substr(0, data_ref_part.find(';'));
 				const std::string updated_data_ref_value = data_ref_part.substr(data_ref_part.find(';') + 1);
-				const auto ed = EnvData::fromString(updated_data_ref_value);
-				refCache.setData(updated_data_ref_name, ed);
-				return "{ok}";
+				auto ed = EnvData::fromString(updated_data_ref_name, updated_data_ref_value);
+				return setDataref(ed);
 			} catch (...) {
 				logger.Error("Error setting dataref: " + what());
 				return "{set_failed}";
@@ -202,4 +211,45 @@ namespace xp11_va {
 		}
 	}
 
+	std::string Link::setDataref(EnvData& data) {
+		XPLMDataRef ref = refCache.GetDataref(data.name);
+		if (!ref) {
+			return "{invalid_dataref}";
+		}
+
+		auto type = XPLMGetDataRefTypes(ref);
+		if (type != data.type) {
+			return "{dataref_type_mismatch}";
+		}
+
+		if (XPLMCanWriteDataRef(ref)) {
+			switch (data.type) {
+			case xplmType_Int:
+				XPLMSetDatai(ref, data.intVal);
+				break;
+			case xplmType_Float:
+				XPLMSetDataf(ref, data.floatVal);
+				break;
+			case xplmType_Double:
+				XPLMSetDatad(ref, data.doubleVal);
+				break;
+			case xplmType_FloatArray:
+				XPLMSetDatavf(ref, data.floatArray, 0, data.arrayElemCount);
+				break;
+			case xplmType_IntArray:
+				XPLMSetDatavi(ref, data.intArray, 0, data.arrayElemCount);
+				break;
+			case xplmType_Data:
+				XPLMSetDatab(ref, data.byteArray, 0, data.arrayElemCount);
+				break;
+			case xplmType_Unknown:
+			default:
+				return "{unknown_type}";
+			}
+			return "{ok}";
+		}
+		else {
+			return "{dataref_not_writable}";
+		}
+	}
 }

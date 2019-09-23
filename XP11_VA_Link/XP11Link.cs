@@ -41,7 +41,7 @@ namespace XP11_VA_Link
             return pipe.IsConnected;
         }
         
-        public DataRef GetDataref(string dataRefName)
+        public DataRef GetDataref(string datarefName)
         {
             logger.Debug("Getting dataref...");
             if (!IsConnected())
@@ -49,7 +49,7 @@ namespace XP11_VA_Link
                 Connect();
             }
             
-            sw.Write("get;" + dataRefName);
+            sw.Write("get;" + datarefName);
             string reply = sr.ReadLine();
             logger.Debug("GetDataRef result: " + reply);
             if (reply == "{invalid_dataref}")
@@ -57,10 +57,10 @@ namespace XP11_VA_Link
                 return null;
             }
 
-            return DataRef.FromString(dataRefName, reply);
+            return DataRef.FromString(datarefName, reply);
         }
 
-        public bool SetDataref(DataRef dataRef)
+        public bool SetDataref(DataRef dataref)
         {
             logger.Debug("Setting dataref...");
             if (!IsConnected())
@@ -68,7 +68,7 @@ namespace XP11_VA_Link
                 Connect();
             }
 
-            sw.Write("set;" + dataRef);
+            sw.Write("set;" + dataref);
             string reply = sr.ReadLine();
             logger.Debug("SetDataRef result: " + reply);
             return reply == "{ok}";

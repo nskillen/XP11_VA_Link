@@ -27,37 +27,49 @@ namespace XP11_VA_Link
         public int[] IntArray { get; private set; }
         public string Data { get; private set; }
 
-        public static DataRef FromString(string dataRefName, string response)
+        public static DataRef FromString(string datarefName, string response)
         {
-            int dataRefType = int.Parse(response.Substring(0, response.IndexOf(";")));
-            string dataRefValue = response.Substring(response.IndexOf(";") + 1);
+            char[] delims = { ';' };
+            string[] parts = response.Split(delims, 3);
+            if (parts.Length != 3)
+            {
+                return null;
+            }
+            string retrievedDatarefName = parts[0];
+            int datarefType = int.Parse(parts[1]);
+            string datarefValue = parts[2];
+
+            if (retrievedDatarefName != datarefName)
+            {
+                return null;
+            }
             
             try
             {
                 DataRef r = new DataRef();
-                r.Name = dataRefName;
-                r.DataType = (Type)dataRefType;
+                r.Name = datarefName;
+                r.DataType = (Type)datarefType;
                 switch (r.DataType)
                 {
                     case Type.Int:
-                        r.IntVal = int.Parse(dataRefValue);
+                        r.IntVal = int.Parse(datarefValue);
                         break;
                     case Type.Float:
-                        r.FloatVal = float.Parse(dataRefValue);
+                        r.FloatVal = float.Parse(datarefValue);
                         break;
                     case Type.Double:
-                        r.DoubleVal = double.Parse(dataRefValue);
+                        r.DoubleVal = double.Parse(datarefValue);
                         break;
                     case Type.FloatArray:
-                        string[] floats = dataRefValue.Split(',');
+                        string[] floats = datarefValue.Split(',');
                         r.FloatArray = floats.Select(f => float.Parse(f)).ToArray();
                         break;
                     case Type.IntArray:
-                        string[] ints = dataRefValue.Split(',');
+                        string[] ints = datarefValue.Split(',');
                         r.IntArray = ints.Select(i => int.Parse(i)).ToArray();
                         break;
                     case Type.Data:
-                        r.Data = dataRefValue;
+                        r.Data = datarefValue;
                         break;
                     case Type.Unknown:
                     default:
@@ -72,10 +84,10 @@ namespace XP11_VA_Link
             }
         }
 
-        public static DataRef FromObject(string dataRefName, object value)
+        public static DataRef FromObject(string datarefName, object value)
         {
             DataRef r = new DataRef();
-            r.Name = dataRefName;
+            r.Name = datarefName;
 
             if (value is int)
             {

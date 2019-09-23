@@ -23,7 +23,6 @@ namespace xp11_va {
 
 	private:
 		bool started;
-		DataCache refCache;
 		std::atomic_bool shouldStop;
 		std::unique_ptr<std::thread> connectionThread;
 		std::shared_ptr<Pipe> connectingPipe;
@@ -40,6 +39,8 @@ namespace xp11_va {
 		float onFlightLoop(float, float, int);
 		void runOnSimThread(const Callback&);
 
+		DataCache refCache;
 		std::string processRequest(const std::string&);
+		std::string setDataref(EnvData&);
 	};
 }
