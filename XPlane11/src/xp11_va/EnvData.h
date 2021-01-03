@@ -16,11 +16,11 @@ namespace xp11_va {
 			uint8_t byteArray[MAX_ARRAY_ELEMS];
 		};
 
-		static EnvData fromString(const std::string&, const std::string&);
+		static EnvData fromString(const std::string&, const std::string&, const std::string&);
 		static EnvData fromDataref(const std::string&, XPLMDataRef);
 
 		inline std::string ToString() {
-			return name + ";" + std::to_string(type) + ";" + dataToString();
+			return name + ":" + std::to_string(type) + ":" + dataToString();
 		}
 
 	private:

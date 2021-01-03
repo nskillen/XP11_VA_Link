@@ -12,11 +12,14 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
-#include <XPLM/XPLMPlugin.h>
+#include <XPLM/XPLMMenus.h>
 #include <XPLM/XPLMDataAccess.h>
+#include <XPLM/XPLMPlugin.h>
 #include <XPLM/XPLMUtilities.h>
 
+#include <functional>
 #include <future>
+#include <list>
 #include <map>
 #include <memory>
 #include <optional>

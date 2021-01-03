@@ -24,11 +24,30 @@
             MinLevel = Level.Debug;
         }
 
-        public void Log(Level level, string msg, string color)
+        public void Log(Level level, string msg, string color = "black")
         {
             if (level >= MinLevel)
             {
                 logFn("[XP11_VA_Link :: " + level.ToString() + "] " + msg, color);
+            }
+        }
+
+        public void LogAtLevel(Level level, string msg)
+        {
+            switch (level)
+            {
+                case Level.Trace:
+                    Trace(msg); break;
+                case Level.Debug:
+                    Debug(msg); break;
+                case Level.Info:
+                    Info(msg); break;
+                case Level.Warning:
+                    Warn(msg); break;
+                case Level.Error:
+                    Error(msg); break;
+                case Level.Critical:
+                    Critical(msg); break;
             }
         }
 

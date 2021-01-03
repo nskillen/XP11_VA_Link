@@ -1,13 +1,20 @@
 #include "pch.h"
 #include "Logger.h"
 
+Logger* Logger::instance = nullptr;
 
-const Logger& Logger::get() {
+Logger& Logger::get() {
+	if (Logger::instance == nullptr) {
+		Logger::Level minLevel =
 #ifdef _DEBUG
-	static Logger instance{ Logger::Level::Trace };
+			Logger::Level::Trace;
 #else
-	static Logger instance{ Logger::Level::Info };
+			Logger::Level::Warn;
 #endif
 
-	return instance;
+		Logger::instance = new Logger(minLevel);
+		Logger::instance->ForceLog(Logger::instance->minLevel, "Logger initialized at this minlevel");
+	}
+
+	return *Logger::instance;
 }

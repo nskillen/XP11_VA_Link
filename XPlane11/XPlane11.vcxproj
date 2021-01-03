@@ -46,15 +46,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\XP11\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\XP11\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)XP11\SDK\CHeaders;$(ProjectDir)src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)XP11\SDK\Libraries\Win;$(LibraryPath)</LibraryPath>
     <TargetName>XP11_VA_Link</TargetName>
     <TargetExt>.xpl</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\XP11\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\XP11\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)XP11\SDK\CHeaders;$(ProjectDir)src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)XP11\SDK\Libraries\Win;$(LibraryPath)</LibraryPath>
     <TargetName>XP11_VA_Link</TargetName>
     <TargetExt>.xpl</TargetExt>
   </PropertyGroup>
@@ -64,7 +64,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;XP11VAPLUGIN_EXPORTS;XPLM200;XPLM210;XPLM300;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;XPLM200;XPLM210;XPLM300;XPLM_DEPRECATED;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -73,7 +73,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>XPLM_64.lib;XPWidgets_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>XPLM_64.lib;XPWidgets_64.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\Steamapps\common\X-Plane 11\Resources\plugins\$(SolutionName)\win_x64\$(TargetFileName)"</Command>
@@ -87,7 +87,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;XP11VAPLUGIN_EXPORTS;XPLM200;XPLM210;XPLM300;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;XPLM200;XPLM210;XPLM300;XPLM_DEPRECATED;IBM;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -98,7 +98,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>XPLM_64.lib;XPWidgets_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>XPLM_64.lib;XPWidgets_64.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\Steamapps\common\X-Plane 11\Resources\plugins\$(SolutionName)\win_x64\$(TargetFileName)"</Command>
@@ -113,6 +113,8 @@
     <ClInclude Include="src\xp11_va\Logger.h" />
     <ClInclude Include="src\xp11_va\Pipe.h" />
     <ClInclude Include="src\xp11_va\platform\windows\WinPipe.h" />
+    <ClInclude Include="src\xp11_va\UI.h" />
+    <ClInclude Include="src\xp11_va\widgets\ListBox.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Plugin.cpp" />
@@ -120,12 +122,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\xp11_va\DataCache.cpp" />
     <ClCompile Include="src\xp11_va\EnvData.cpp" />
     <ClCompile Include="src\xp11_va\Link.cpp" />
     <ClCompile Include="src\xp11_va\Logger.cpp" />
     <ClCompile Include="src\xp11_va\Pipe.cpp" />
     <ClCompile Include="src\xp11_va\platform\windows\WinPipe.cpp" />
+    <ClCompile Include="src\xp11_va\UI.cpp" />
+    <ClCompile Include="src\xp11_va\widgets\ListBox.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

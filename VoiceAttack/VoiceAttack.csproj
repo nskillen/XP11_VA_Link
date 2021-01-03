@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataRef.cs" />
+    <Compile Include="DatarefFactory.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="XP11Link.cs" />
     <Compile Include="XP11_VA_Link.cs" />

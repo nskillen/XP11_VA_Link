@@ -65,8 +65,8 @@
  *
  */
 
-#include "XPWidgetDefs.h"
-#include "XPLMDisplay.h"
+#include <Widgets/XPWidgetDefs.h>
+#include <XPLM/XPLMDisplay.h>
 
 #ifdef __cplusplus
 extern "C" {

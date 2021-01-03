@@ -6,7 +6,7 @@ namespace XP11_VA_Link
 {
     class DataRef
     {
-        public enum Type
+        [Flags] public enum Type
         {
             Unknown = 0,
             Int = 1,
@@ -17,150 +17,76 @@ namespace XP11_VA_Link
             Data = 32
         }
 
-        public string Name { get; private set; }
+        public string Name { get; set; }
 
-        public Type DataType { get; private set; }
-        public int IntVal { get; private set; }
-        public float FloatVal { get; private set; }
-        public double DoubleVal { get; private set; }
-        public float[] FloatArray { get; private set; }
-        public int[] IntArray { get; private set; }
-        public string Data { get; private set; }
-
-        public static DataRef FromString(string datarefName, string response)
-        {
-            char[] delims = { ';' };
-            string[] parts = response.Split(delims, 3);
-            if (parts.Length != 3)
-            {
-                return null;
-            }
-            string retrievedDatarefName = parts[0];
-            int datarefType = int.Parse(parts[1]);
-            string datarefValue = parts[2];
-
-            if (retrievedDatarefName != datarefName)
-            {
-                return null;
-            }
-            
-            try
-            {
-                DataRef r = new DataRef();
-                r.Name = datarefName;
-                r.DataType = (Type)datarefType;
-                switch (r.DataType)
+        public object Value {
+            get {
+                switch (DataType)
                 {
-                    case Type.Int:
-                        r.IntVal = int.Parse(datarefValue);
-                        break;
-                    case Type.Float:
-                        r.FloatVal = float.Parse(datarefValue);
-                        break;
-                    case Type.Double:
-                        r.DoubleVal = double.Parse(datarefValue);
-                        break;
-                    case Type.FloatArray:
-                        string[] floats = datarefValue.Split(',');
-                        r.FloatArray = floats.Select(f => float.Parse(f)).ToArray();
-                        break;
-                    case Type.IntArray:
-                        string[] ints = datarefValue.Split(',');
-                        r.IntArray = ints.Select(i => int.Parse(i)).ToArray();
-                        break;
-                    case Type.Data:
-                        r.Data = datarefValue;
-                        break;
-                    case Type.Unknown:
-                    default:
-                        // TODO: log unknown data ref type
-                        return null;
+                    case Type.Int: return IntVal;
+                    case Type.Float: return FloatVal;
+                    case Type.Double: return DoubleVal;
+                    case Type.FloatArray: return FloatArray;
+                    case Type.IntArray: return IntArray;
+                    case Type.Data: return Data;
+                    default: throw new Exception(string.Format("Unexpected data type {0}", DataType));
                 }
-                return r;
-            } catch
-            {
-                // TODO: log error
-                return null;
             }
         }
 
-        public static DataRef FromObject(string datarefName, object value)
-        {
-            DataRef r = new DataRef();
-            r.Name = datarefName;
-
-            if (value is int)
-            {
-                r.DataType = Type.Int;
-                r.IntVal = (int)value;
-            }
-            else if (value is float)
-            {
-                r.DataType = Type.Float;
-                r.FloatVal = (float)value;
-            }
-            else if (value is double)
-            {
-                r.DataType = Type.Double;
-                r.DoubleVal = (double)value;
-            }
-            else if (value is float[])
-            {
-                r.DataType = Type.FloatArray;
-                r.FloatArray = (float[])value;
-            }
-            else if (value is int[])
-            {
-                r.DataType = Type.IntArray;
-                r.IntArray = (int[])value;
-            }
-            else if (value is string)
-            {
-                r.DataType = Type.Data;
-                r.Data = (string)value;
-            }
-            else
-            {
-                // TODO: handle unknown value type
-                return null;
-            }
-
-            return r;
-        }
+        public Type DataType { get; set; }
+        public int IntVal { get; set; }
+        public float FloatVal { get; set; }
+        public double DoubleVal { get; set; }
+        public float[] FloatArray { get; set; }
+        public int[] IntArray { get; set; }
+        public string Data { get; set; }
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append(Name);
-            sb.Append(";");
-            sb.Append((int)DataType);
-            sb.Append(";");
-            switch (DataType)
+            try
             {
-                case Type.Int:
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Name);
+                sb.Append(":");
+                sb.Append((int)DataType);
+                sb.Append(":");
+
+                if ((DataType & Type.Int) != 0)
+                {
                     sb.Append(IntVal);
-                    break;
-                case Type.Float:
+                }
+                else if ((DataType & Type.Float) != 0)
+                {
                     sb.Append(FloatVal);
-                    break;
-                case Type.Double:
+                }
+                else if ((DataType & Type.Double) != 0)
+                {
                     sb.Append(DoubleVal);
-                    break;
-                case Type.FloatArray:
+                }
+                else if ((DataType & Type.FloatArray) != 0)
+                {
                     sb.Append(string.Join(",", FloatArray));
-                    break;
-                case Type.IntArray:
+                }
+                else if ((DataType & Type.IntArray) != 0)
+                {
                     sb.Append(string.Join(",", IntArray));
-                    break;
-                case Type.Data:
+                }
+                else if ((DataType & Type.Data) != 0)
+                {
                     sb.Append(Data);
-                    break;
-                case Type.Unknown:
-                default:
-                    // TODO: handle bad dataref
-                    return null;
+                }
+                else
+                {
+                    sb.Append("{unknown_datatype}");
+                }
+
+                return sb.ToString();
             }
-            return sb.ToString();
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
         }
     }
 }

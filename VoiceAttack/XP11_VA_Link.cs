@@ -78,8 +78,12 @@ namespace XP11_VA_Link
         public static void VA_Init1(dynamic vaProxy)
         {
             logger = new Logger((msg, color) => vaProxy.WriteToLog(msg, color));
-            logger.MinLevel = Logger.Level.Warning;
+#if DEBUG
+            logger.MinLevel = Logger.Level.Info;
             vaProxy.WriteToLog("VA_Init1", "green");
+#else
+            logger.MinLevel = Logger.Level.Warning;
+#endif
             link = new XP11Link(logger);
         }
 
@@ -120,11 +124,23 @@ namespace XP11_VA_Link
                         case "SetDataref":
                             SetDataRef(vaProxy);
                             break;
+                        case "BeginCommand":
+                            BeginCommand(vaProxy);
+                            break;
+                        case "EndCommand":
+                            EndCommand(vaProxy);
+                            break;
+                        case "OnceCommand":
+                            OnceCommand(vaProxy);
+                            break;
+                        case "HoldCommand":
+                            HoldCommand(vaProxy);
+                            break;
                         case "GetLogLevel":
                             vaProxy.SetText("logLevel", logger.MinLevel.ToString());
                             break;
                         case "SetLogLevel":
-                            string logLevel = vaProxy.GetText("logLevel");
+                            string logLevel = vaProxy.GetText("~logLevel");
                             if (logLevel != null)
                             {
                                 try
@@ -151,44 +167,54 @@ namespace XP11_VA_Link
             }
             catch (Exception e)
             {
-                logger.Critical(e.StackTrace);
+                logger.Critical(e.ToString() + "\n" + e.StackTrace);
                 throw e;
             }
         }
 
         private static void GetDataRef(dynamic vaProxy)
         {
-            string datarefName = vaProxy.GetText("datarefName");
-            string targetVar = vaProxy.GetText("targetVar");
-            if (targetVar == null) { targetVar = "datarefValue"; }
+            string datarefName = vaProxy.GetText("~datarefName");
+            string targetVar = vaProxy.GetText("~targetVar");
+            if (targetVar == null || targetVar.Length == 0) { targetVar = "~~datarefValue"; }
 
             DataRef dr = link.GetDataref(datarefName);
             if (dr != null)
             {
                 logger.Info("Got dataref: " + dr.ToString());
-                switch (dr.DataType)
+
+                if ((dr.DataType & DataRef.Type.Int) != 0)
                 {
-                    case DataRef.Type.Int:
-                        vaProxy.SetInt(targetVar, dr.IntVal);
-                        break;
-                    case DataRef.Type.Float:
-                        vaProxy.SetDecimal(targetVar, dr.FloatVal);
-                        break;
-                    case DataRef.Type.Double:
-                        vaProxy.SetDecimal(targetVar, dr.DoubleVal);
-                        break;
-                    case DataRef.Type.FloatArray:
-                        throw new ArgumentException("Array datarefs are not yet supported");
-                    case DataRef.Type.IntArray:
-                        throw new ArgumentException("Array datarefs are not yet supported");
-                    case DataRef.Type.Data:
-                        vaProxy.SetString(targetVar, dr.Data);
-                        break;
-                    case DataRef.Type.Unknown:
-                    default:
-                        throw new ArgumentException("Unknown dataref type: " + dr.DataType);
+                    vaProxy.SetInt(targetVar, dr.IntVal);
                 }
-            } else
+                else if ((dr.DataType & DataRef.Type.Float) != 0)
+                {
+                    decimal? d = (decimal)dr.FloatVal;
+                    vaProxy.SetDecimal(targetVar, d);
+                }
+                else if ((dr.DataType & DataRef.Type.Double) != 0)
+                {
+                    decimal? d = (decimal)dr.DoubleVal;
+                    vaProxy.SetDecimal(targetVar, d);
+                }
+                else if ((dr.DataType & DataRef.Type.IntArray) != 0)
+                {
+                    throw new ArgumentException("Array datarefs are not yet supported");
+                }
+                else if ((dr.DataType & DataRef.Type.FloatArray) != 0)
+                {
+                    throw new ArgumentException("Array datarefs are not yet supported");
+                }
+                else if ((dr.DataType & DataRef.Type.Data) != 0)
+                {
+                    vaProxy.SetString(targetVar, dr.Data);
+                }
+                else
+                {
+                    throw new ArgumentException("Unknown dataref type: " + dr.DataType);
+                }
+            }
+            else
             {
                 logger.Warn("Failed to get dataref: " + datarefName);
             }
@@ -196,30 +222,27 @@ namespace XP11_VA_Link
 
         private static void SetDataRef(dynamic vaProxy)
         {
-            string datarefName = vaProxy.GetText("datarefName");
-            int datarefType = ((int?)vaProxy.GetInt("datarefType")).GetValueOrDefault(0);
-            object datarefValue = null;
+            string datarefName = vaProxy.GetText("~datarefName");
+            int datarefType = vaProxy.GetInt("~datarefType") ?? throw new ArgumentException("Missing parameter ~datareftype");
+            object datarefValue;
 
             switch ((DataRef.Type)datarefType)
             {
                 case DataRef.Type.Int:
-                    int? ival = (int?)vaProxy.GetInt("datarefValue");
-                    datarefValue = ival.HasValue ? ival.Value : throw new ArgumentException("No int value assigned to datarefValue");
+                    datarefValue = (int?)vaProxy.GetInt("~~datarefValue") ?? throw new ArgumentException("No int value assigned to datarefValue");
                     break;
                 case DataRef.Type.Float:
-                    decimal? fval = (decimal?)vaProxy.GetDecimal("datarefValue");
-                    datarefValue = fval.HasValue ? (float)fval.Value : throw new ArgumentException("No decimal value assigned to datarefValue");
+                    datarefValue = (decimal?)vaProxy.GetDecimal("~~datarefValue") ?? throw new ArgumentException("No decimal value assigned to datarefValue");
                     break;
                 case DataRef.Type.Double:
-                    decimal? dval = (decimal?)vaProxy.GetDecimal("datarefValue");
-                    datarefValue = dval.HasValue ? (double)dval.Value : throw new ArgumentException("No decimal value assigned to datarefValue");
+                    datarefValue = (decimal?)vaProxy.GetDecimal("~~datarefValue") ?? throw new ArgumentException("No decimal value assigned to datarefValue");
                     break;
                 case DataRef.Type.FloatArray:
                     throw new ArgumentException("Array datarefs are not yet supported");
                 case DataRef.Type.IntArray:
                     throw new ArgumentException("Array datarefs are not yet supported");
                 case DataRef.Type.Data:
-                    datarefValue = (string)vaProxy.GetText("datarefValue");
+                    datarefValue = (string)vaProxy.GetText("~~datarefValue");
                     break;
                 case DataRef.Type.Unknown:
                 default:
@@ -227,7 +250,7 @@ namespace XP11_VA_Link
             }
 
             
-            DataRef dr = DataRef.FromObject(datarefName, datarefValue);
+            DataRef dr = new DatarefFactory(logger).FromObject(datarefName, datarefValue);
             if (dr != null)
             {
                 logger.Debug("Will set dataref: " + dr.ToString());
@@ -246,6 +269,67 @@ namespace XP11_VA_Link
                 logger.Debug("datarefName: " + datarefName);
                 logger.Debug("datarefType: " + datarefType);
                 logger.Debug("datarefValue: " + datarefValue);
+            }
+        }
+
+        private static void BeginCommand(dynamic vaProxy)
+        {
+            string commandName = vaProxy.GetText("~commandName");
+            if (link.BeginCommand(commandName))
+            {
+                logger.Debug("Command begun: " + commandName);
+            }
+            else
+            {
+                logger.Warn("Failed to begin command: " + commandName);
+            }
+        }
+
+        private static void EndCommand(dynamic vaProxy)
+        {
+            string commandName = vaProxy.GetText("~commandName");
+            if (link.EndCommand(commandName))
+            {
+                logger.Debug("Command ended: " + commandName);
+            }
+            else
+            {
+                logger.Warn("Failed to end command: " + commandName);
+            }
+        }
+
+        private static void OnceCommand(dynamic vaProxy)
+        {
+            string commandName = vaProxy.GetText("~commandName");
+            if (link.OnceCommand(commandName))
+            {
+                logger.Debug("Command onced: " + commandName);
+            }
+            else
+            {
+                logger.Warn("Failed to once command: " + commandName);
+            }
+        }
+
+        private static void HoldCommand(dynamic vaProxy)
+        {
+            string commandName = vaProxy.GetText("~commandName");
+            int? commandDuration = vaProxy.GetInt("~commandDuration");
+
+            if (commandDuration.HasValue)
+            {
+                if (link.HoldCommand(commandName, commandDuration.Value))
+                {
+                    logger.Debug("Command " + commandName + " held for " + commandDuration.Value + "ms");
+                }
+                else
+                {
+                    logger.Warn("Failed to hold command: " + commandName);
+                }
+            }
+            else
+            {
+                logger.Warn("Holding a command requires a duration");
             }
         }
     }

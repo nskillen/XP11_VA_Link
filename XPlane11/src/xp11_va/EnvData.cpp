@@ -3,47 +3,56 @@
 #include "Logger.h"
 
 namespace xp11_va {
-	EnvData EnvData::fromString(const std::string& name, const std::string& str) {
-		Logger::get().Trace("EnvData::fromString called with " + str);
-		const auto type = std::strtol(str.c_str(), nullptr, 10);
-		const auto values = str.substr(str.find(';') + 1);
+	EnvData EnvData::fromString(const std::string& dataref_name, const std::string& dataref_type, const std::string& dataref_value) {
+		const auto type = std::strtol(dataref_type.c_str(), nullptr, 10);
 
 		EnvData ed{};
-		ed.name = name;
+		ed.name = dataref_name;
 		ed.type = type;
 
-		size_t start;
 		std::string val;
 
 		switch (type) {
 		case xplmType_Int:
-			ed.intVal = std::strtol(values.c_str(), nullptr, 10);
+			ed.intVal = std::strtol(dataref_value.c_str(), nullptr, 10);
 			break;
 		case xplmType_Float:
-			ed.floatVal = std::strtof(values.c_str(), nullptr);
+			ed.floatVal = std::strtof(dataref_value.c_str(), nullptr);
 			break;
 		case xplmType_Double:
-			ed.doubleVal = std::strtod(values.c_str(), nullptr);
+			ed.doubleVal = std::strtod(dataref_value.c_str(), nullptr);
 			break;
 		case xplmType_FloatArray:
-			start = 0;
-			while (start != std::string::npos && ed.arrayElemCount < MAX_ARRAY_ELEMS) {
-				ed.floatArray[ed.arrayElemCount] = std::strtof(str.substr(start).c_str(), nullptr);
+		{
+			size_t v_start = 0;
+			size_t v_end = dataref_value.find(',', v_start);
+			while (ed.arrayElemCount < MAX_ARRAY_ELEMS) {
+				ed.floatArray[ed.arrayElemCount] = std::strtof(dataref_value.substr(v_start, v_end - v_start).c_str(), nullptr);
 				ed.arrayElemCount += 1;
-				start = values.find(',', start) + 1;
+
+				if (v_end == std::string::npos) { break; }
+				v_start = v_end + 1;
+				v_end = dataref_value.find(',', v_start);
 			}
 			break;
+		}
 		case xplmType_IntArray:
-			start = 0;
-			while (start != std::string::npos && ed.arrayElemCount < MAX_ARRAY_ELEMS) {
-				ed.intArray[ed.arrayElemCount] = std::strtol(str.substr(start).c_str(), nullptr, 10);
+		{
+			size_t v_start = 0;
+			size_t v_end = dataref_value.find(',', v_start);
+			while (ed.arrayElemCount < MAX_ARRAY_ELEMS) {
+				ed.intArray[ed.arrayElemCount] = std::strtol(dataref_value.substr(v_start, v_end - v_start).c_str(), nullptr, 10);
 				ed.arrayElemCount += 1;
-				start = values.find(',', start) + 1;
+
+				if (v_end == std::string::npos) { break; }
+				v_start = v_end + 1;
+				v_end = dataref_value.find(',', v_start);
 			}
 			break;
+		}
 		case xplmType_Data:
-			ed.arrayElemCount = min(values.length() * sizeof(std::string::value_type), MAX_ARRAY_ELEMS);
-			memcpy_s(ed.byteArray, MAX_ARRAY_ELEMS, values.c_str(), ed.arrayElemCount);
+			ed.arrayElemCount = min(dataref_value.length() * sizeof(std::string::value_type), MAX_ARRAY_ELEMS);
+			memcpy_s(ed.byteArray, MAX_ARRAY_ELEMS, dataref_value.c_str(), ed.arrayElemCount);
 			break;
 		case xplmType_Unknown:
 		default:

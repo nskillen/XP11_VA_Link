@@ -99,9 +99,10 @@ namespace xp11_va::platform::windows {
 			throw std::runtime_error("Attempt to write to non-connected pipe!");
 		}
 		
+		DWORD bytesToWrite = static_cast<DWORD>(msg.length() * sizeof(std::string::value_type));
 		DWORD bytesWritten;
 
-		if (WriteFile(pipe, msg.c_str(), msg.length() * sizeof(std::string::value_type), &bytesWritten, nullptr)) {
+		if (WriteFile(pipe, msg.c_str(), bytesToWrite, &bytesWritten, nullptr)) {
 			return true;
 		}
 

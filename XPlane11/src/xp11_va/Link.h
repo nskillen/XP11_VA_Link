@@ -1,9 +1,5 @@
 #pragma once
 
-#include <atomic>
-#include <functional>
-#include <mutex>
-#include <thread>
 #include <XPLM/XPLMProcessing.h>
 
 #include "DataCache.h"
@@ -12,8 +8,8 @@
 namespace xp11_va {
 	class Link {
 	public:
-		typedef std::function<void()> Callback;
-		typedef std::vector<Callback> CallbackList;
+		typedef std::function<bool()> Callback;
+		typedef std::list<Callback> CallbackList;
 		
 		Link();
 		~Link();
@@ -32,15 +28,23 @@ namespace xp11_va {
 		std::mutex pipesMutex;
 		
 		XPLMFlightLoopID flightLoopID;
-		std::mutex callbackMutex;
+		std::recursive_mutex callbackMutex;
 		CallbackList flightLoopCallbacks;
+		std::atomic<float> totalTimeElapsed;
 
 		XPLMFlightLoopID createFlightLoop();
 		float onFlightLoop(float, float, int);
 		void runOnSimThread(const Callback&);
 
-		DataCache refCache;
+		DataCache<std::string, XPLMDataRef> refCache = { [](const auto& key) -> XPLMDataRef { return XPLMFindDataRef(key.c_str()); } };
+		DataCache<std::string, XPLMCommandRef> cmdCache = { [](const auto& key) -> XPLMCommandRef { return XPLMFindCommand(key.c_str()); } };
+		
 		std::string processRequest(const std::string&);
-		std::string setDataref(EnvData&);
+		
+		std::string handleDatarefRequest(const std::vector<std::string>&);
+		std::string getDataref(const std::vector<std::string>&);
+		std::string setDataref(const std::vector<std::string>&);
+
+		std::string handleCommandRequest(const std::vector<std::string>&);
 	};
 }

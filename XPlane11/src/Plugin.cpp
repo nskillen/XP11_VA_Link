@@ -3,10 +3,12 @@
 
 #include "xp11_va/Link.h"
 #include "xp11_va/Logger.h"
+#include "xp11_va/UI.h"
 
 std::unique_ptr<xp11_va::Link> link{ nullptr };
 
-const Logger& logger = Logger::get();
+Logger& logger = Logger::get();
+// xp11_va::UI* ui;
 
 std::string what(const std::exception_ptr& e = std::current_exception()) {
 	if (!e) { throw std::bad_exception(); }
@@ -23,6 +25,8 @@ PLUGIN_API int XPluginStart(char* outName, char* outSig, char* outDesc) {
 	strncpy_s(outName, 255, "XP11/VoiceAttack Connector", 255);
 	strncpy_s(outSig, 255, "ndjsoft.xp11va.connector", 255);
 	strncpy_s(outDesc, 255, "A connector plugin to link X-Plane 11 with VoiceAttack", 255);
+
+	// ui = new xp11_va::UI();
 
 	link = std::make_unique<xp11_va::Link>();
 
@@ -72,6 +76,13 @@ PLUGIN_API void XPluginDisable() {
 }
 
 PLUGIN_API void XPluginStop() {
+	/*
+	if (nullptr != ui) {
+		delete ui;
+		ui = nullptr;
+	}
+	*/
+
 	logger.Trace("XPluginStop enter");
 
 	link.reset(nullptr);
