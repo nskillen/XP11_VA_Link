@@ -83,45 +83,42 @@ namespace XP11_VA_Link
             }
         }
 
-        public DataRef FromObject(string datarefName, object value)
+        public DataRef FromObject(string datarefName, int datarefType, object value)
         {
             DataRef r = new DataRef();
             r.Name = datarefName;
 
-            if (value is int)
+            switch (datarefType)
             {
-                r.DataType = DataRef.Type.Int;
-                r.IntVal = (int)value;
-            }
-            else if (value is float)
-            {
-                r.DataType = DataRef.Type.Float;
-                r.FloatVal = (float)value;
-            }
-            else if (value is double)
-            {
-                r.DataType = DataRef.Type.Double;
-                r.DoubleVal = (double)value;
-            }
-            else if (value is float[])
-            {
-                r.DataType = DataRef.Type.FloatArray;
-                r.FloatArray = (float[])value;
-            }
-            else if (value is int[])
-            {
-                r.DataType = DataRef.Type.IntArray;
-                r.IntArray = (int[])value;
-            }
-            else if (value is string)
-            {
-                r.DataType = DataRef.Type.Data;
-                r.Data = (string)value;
-            }
-            else
-            {
-                logger.Error("Unknown dataref type: " + r.DataType);
-                return null;
+                case 1:
+                    r.DataType = DataRef.Type.Int;
+                    r.IntVal = (int)value;
+                    break;
+                case 2:
+                    r.DataType = DataRef.Type.Float;
+                    decimal df = (decimal)value;
+                    r.FloatVal = (float)df;
+                    break;
+                case 4:
+                    r.DataType = DataRef.Type.Double;
+                    decimal dd = (decimal)value;
+                    r.DoubleVal = (double)dd;
+                    break;
+                case 8:
+                    r.DataType = DataRef.Type.FloatArray;
+                    r.FloatArray = (float[])value;
+                    break;
+                case 16:
+                    r.DataType = DataRef.Type.IntArray;
+                    r.IntArray = (int[])value;
+                    break;
+                case 32:
+                    r.DataType = DataRef.Type.Data;
+                    r.Data = (string)value;
+                    break;
+                default:
+                    logger.Error("Unknown dataref type: " + datarefType);
+                    return null;
             }
 
             return r;

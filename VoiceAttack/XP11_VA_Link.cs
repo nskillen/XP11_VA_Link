@@ -80,7 +80,6 @@ namespace XP11_VA_Link
             logger = new Logger((msg, color) => vaProxy.WriteToLog(msg, color));
 #if DEBUG
             logger.MinLevel = Logger.Level.Info;
-            vaProxy.WriteToLog("VA_Init1", "green");
 #else
             logger.MinLevel = Logger.Level.Warning;
 #endif
@@ -168,7 +167,6 @@ namespace XP11_VA_Link
             catch (Exception e)
             {
                 logger.Critical(e.ToString() + "\n" + e.StackTrace);
-                throw e;
             }
         }
 
@@ -250,7 +248,7 @@ namespace XP11_VA_Link
             }
 
             
-            DataRef dr = new DatarefFactory(logger).FromObject(datarefName, datarefValue);
+            DataRef dr = new DatarefFactory(logger).FromObject(datarefName, datarefType, datarefValue);
             if (dr != null)
             {
                 logger.Debug("Will set dataref: " + dr.ToString());
