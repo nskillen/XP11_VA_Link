@@ -50,6 +50,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\VoiceAttack\Apps\$(TargetName)\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>mkdir "$(SolutionDir)package\$(ProjectName)\Apps\$(SolutionName)"
+copy "$(TargetPath)" "$(SolutionDir)package\$(ProjectName)\Apps\$(SolutionName)\$(TargetFileName)"
+copy "$(ProjectDir)XP11_VA_Link.vap" "$(SolutionDir)package\$(ProjectName)\XP11_VA_Link.vap"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>rmdir /Q /S "$(SolutionDir)package\$(ProjectName)"</PreBuildEvent>
   </PropertyGroup>
 </Project>

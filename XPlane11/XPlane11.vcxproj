@@ -76,8 +76,12 @@
       <AdditionalDependencies>XPLM_64.lib;XPWidgets_64.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\Steamapps\common\X-Plane 11\Resources\plugins\$(SolutionName)\win_x64\$(TargetFileName)"</Command>
+      <Command>mkdir "$(SolutionDir)package\X-Plane 11\Resources\plugins\$(SolutionName)\win_$(PlatformName)"
+copy "$(TargetPath)" "$(SolutionDir)package\X-Plane 11\Resources\plugins\$(SolutionName)\win_$(PlatformName)\$(TargetFileName)"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /Q /S "$(SolutionDir)package\X-Plane 11"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -101,8 +105,12 @@
       <AdditionalDependencies>XPLM_64.lib;XPWidgets_64.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\Steamapps\common\X-Plane 11\Resources\plugins\$(SolutionName)\win_x64\$(TargetFileName)"</Command>
+      <Command>mkdir "$(SolutionDir)package\X-Plane 11\Resources\plugins\$(SolutionName)\win_$(PlatformName)"
+copy "$(TargetPath)" "$(SolutionDir)package\X-Plane 11\Resources\plugins\$(SolutionName)\win_$(PlatformName)\$(TargetFileName)"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /Q /S "$(SolutionDir)package\X-Plane 11"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\framework.h" />
