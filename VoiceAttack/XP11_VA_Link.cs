@@ -205,7 +205,7 @@ namespace XP11_VA_Link
                 }
                 else if ((dr.DataType & DataRef.Type.Data) != 0)
                 {
-                    vaProxy.SetString(targetVar, dr.Data);
+                    vaProxy.SetText(targetVar, string.Join("", dr.Data.Split(',')));
                 }
                 else
                 {
